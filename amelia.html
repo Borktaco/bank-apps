@@ -16,7 +16,7 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background: #C8E6C9;
-            background-image: url('data:image/svg+xml,<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg"><g><ellipse cx="100" cy="100" rx="50" ry="35" fill="%2366BB6A"/><ellipse cx="100" cy="100" rx="40" ry="28" fill="%2381C784"/><circle cx="80" cy="90" r="12" fill="%2366BB6A"/><circle cx="120" cy="90" r="12" fill="%2366BB6A"/><circle cx="100" cy="75" r="15" fill="%2366BB6A"/><circle cx="75" cy="110" r="8" fill="%2366BB6A"/><circle cx="125" cy="110" r="8" fill="%2366BB6A"/><circle cx="85" cy="95" r="3" fill="%23000"/><circle cx="115" cy="95" r="3" fill="%23000"/></g></svg>');
+            background-image: url('data:image/svg+xml,<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg"><g><ellipse cx="100" cy="90" rx="40" ry="50" fill="%23000"/><ellipse cx="100" cy="95" rx="30" ry="35" fill="%23fff"/><circle cx="90" cy="75" r="4" fill="%23000"/><circle cx="110" cy="75" r="4" fill="%23000"/><ellipse cx="100" cy="85" rx="6" ry="8" fill="%23FFA500"/><ellipse cx="85" cy="120" rx="8" ry="4" fill="%23FFA500"/><ellipse cx="115" cy="120" rx="8" ry="4" fill="%23FFA500"/></g></svg>');
             background-size: 150px 150px;
             min-height: 100vh;
             padding: 0;
@@ -401,22 +401,26 @@
         const dbRef = database.ref('amelia');
         let state = {...INITIAL_DATA};
 
-        // Initialize database with initial data if empty
+        // Initialize database - ensure complete structure exists
         dbRef.once('value').then(snapshot => {
-            if (!snapshot.exists() || !snapshot.val().checking || !snapshot.val().transactions) {
+            if (!snapshot.exists() || !snapshot.val().transactions) {
                 console.log('Initializing complete data structure');
-                dbRef.set(INITIAL_DATA);
+                return dbRef.set(INITIAL_DATA).then(() => {
+                    state = INITIAL_DATA;
+                    updateDisplay();
+                });
+            } else {
+                state = snapshot.val();
+                updateDisplay();
             }
         });
 
         // Listen for changes
         dbRef.on('value', (snapshot) => {
-            if (snapshot.exists() && snapshot.val().checking !== undefined) {
+            if (snapshot.exists() && snapshot.val().transactions !== undefined) {
                 state = snapshot.val();
-            } else {
-                state = INITIAL_DATA;
+                updateDisplay();
             }
-            updateDisplay();
             document.getElementById('syncStatus').textContent = '● Synced';
             document.getElementById('syncStatus').classList.add('connected');
         });
@@ -437,6 +441,18 @@
 
         function renderTransactions() {
             const list = document.getElementById('transactionList');
+            
+            // Safety check
+            if (!state.transactions || state.transactions.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <p>🎉 Welcome to your new bank account!</p>
+                        <p>Start by adding your first transaction above</p>
+                    </div>
+                `;
+                return;
+            }
+            
             list.innerHTML = '';
             
             const sorted = [...state.transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
