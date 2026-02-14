@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Fix Lilly's Data</title>
+    <title>Fix Lilly & Amelia's Data</title>
     <style>
         body {
             font-family: -apple-system, sans-serif;
@@ -40,9 +40,9 @@
 </head>
 <body>
     <div class="box">
-        <h1>🐧 Fix Lilly's Account</h1>
-        <p>This will add the missing transactions array to Lilly's account.</p>
-        <button onclick="fixLilly()">FIX LILLY'S DATA</button>
+        <h1>🐧🐢 Fix Lilly & Amelia's Accounts</h1>
+        <p>This will add the missing transactions array to both Lilly and Amelia's accounts.</p>
+        <button onclick="fixLilly()">FIX BOTH ACCOUNTS</button>
         <div id="status"></div>
     </div>
 
@@ -65,12 +65,13 @@
 
         async function fixLilly() {
             const status = document.getElementById('status');
-            status.textContent = 'Fixing...';
+            status.textContent = 'Fixing both Lilly and Amelia...';
             
             try {
                 await database.ref('lilly/transactions').set([]);
+                await database.ref('amelia/transactions').set([]);
                 
-                status.textContent = '✅ SUCCESS! Lilly now has a transactions array. Refresh the Lilly app!';
+                status.textContent = '✅ SUCCESS! Both Lilly and Amelia now have transactions arrays. Refresh their apps!';
                 status.className = 'success';
             } catch (error) {
                 status.textContent = '❌ ERROR: ' + error.message;
