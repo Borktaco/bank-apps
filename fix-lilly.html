@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Fix Lilly's Data</title>
+    <style>
+        body {
+            font-family: -apple-system, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .box {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #0277BD; }
+        button {
+            background: #0277BD;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 6px;
+            font-size: 18px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover { background: #01579B; }
+        #status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>🐧 Fix Lilly's Account</h1>
+        <p>This will add the missing transactions array to Lilly's account.</p>
+        <button onclick="fixLilly()">FIX LILLY'S DATA</button>
+        <div id="status"></div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCfjRevKdAy073LmPaLnPQjh8mk_dR-uWE",
+            authDomain: "bank-apps-d4bf4.firebaseapp.com",
+            databaseURL: "https://bank-apps-d4bf4-default-rtdb.firebaseio.com",
+            projectId: "bank-apps-d4bf4",
+            storageBucket: "bank-apps-d4bf4.firebasestorage.app",
+            messagingSenderId: "249509247066",
+            appId: "1:249509247066:web:6be6a5842e501a7d104063"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        async function fixLilly() {
+            const status = document.getElementById('status');
+            status.textContent = 'Fixing...';
+            
+            try {
+                await database.ref('lilly/transactions').set([]);
+                
+                status.textContent = '✅ SUCCESS! Lilly now has a transactions array. Refresh the Lilly app!';
+                status.className = 'success';
+            } catch (error) {
+                status.textContent = '❌ ERROR: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
