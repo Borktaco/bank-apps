@@ -403,14 +403,19 @@
 
         // Initialize database with initial data if empty
         dbRef.once('value').then(snapshot => {
-            if (!snapshot.exists()) {
+            if (!snapshot.exists() || !snapshot.val().checking || !snapshot.val().transactions) {
+                console.log('Initializing complete data structure');
                 dbRef.set(INITIAL_DATA);
             }
         });
 
         // Listen for changes
         dbRef.on('value', (snapshot) => {
-            state = snapshot.exists() ? snapshot.val() : INITIAL_DATA;
+            if (snapshot.exists() && snapshot.val().checking !== undefined) {
+                state = snapshot.val();
+            } else {
+                state = INITIAL_DATA;
+            }
             updateDisplay();
             document.getElementById('syncStatus').textContent = '● Synced';
             document.getElementById('syncStatus').classList.add('connected');
