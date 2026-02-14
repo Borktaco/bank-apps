@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Nate's Purchases 💳</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        .container { max-width: 100%; padding: 15px; padding-bottom: 80px; }
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 15px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .header h1 { color: #667eea; font-size: 28px; margin-bottom: 5px; }
+        .header p { color: #764ba2; font-size: 14px; }
+        .sync-status { font-size: 11px; color: #666; margin-top: 5px; }
+        .sync-status.connected { color: #11998e; }
+        .balance-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        .balance-label { font-size: 16px; color: #666; margin-bottom: 10px; }
+        .balance-value { font-size: 48px; font-weight: bold; color: #eb3349; margin-bottom: 5px; }
+        .balance-value.paid { color: #11998e; }
+        .balance-note { font-size: 14px; color: #999; }
+        .input-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .input-section h3 { color: #667eea; margin-bottom: 15px; font-size: 18px; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; color: #555; margin-bottom: 5px; font-size: 14px; font-weight: 500; }
+        .input-group input, .input-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+        .input-group textarea { resize: vertical; min-height: 60px; }
+        .input-group input:focus, .input-group textarea:focus { outline: none; border-color: #667eea; }
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            margin-bottom: 10px;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-add {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            box-shadow: 0 4px 15px rgba(235, 51, 73, 0.3);
+        }
+        .btn-paid {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3);
+            font-size: 18px;
+            padding: 18px;
+        }
+        .history-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .history-section h3 { color: #667eea; margin-bottom: 15px; font-size: 18px; }
+        .purchase {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #eb3349;
+        }
+        .purchase.paid { opacity: 0.6; border-left-color: #11998e; }
+        .purchase-info { flex: 1; }
+        .purchase-date { font-size: 12px; color: #999; margin-bottom: 3px; }
+        .purchase-desc { font-size: 14px; color: #333; font-weight: 500; margin-bottom: 3px; }
+        .purchase-notes { font-size: 12px; color: #666; font-style: italic; }
+        .purchase-amount { font-size: 16px; font-weight: bold; margin-left: 10px; color: #eb3349; }
+        .purchase.paid .purchase-amount { color: #11998e; text-decoration: line-through; }
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 1000;
+            transition: transform 0.3s;
+            max-width: 90%;
+        }
+        .notification.show { transform: translateX(-50%) translateY(0); }
+        .notification.success { border-left: 4px solid #11998e; }
+        .notification.error { border-left: 4px solid #eb3349; }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        .status-badge.unpaid { background: #ffebee; color: #c62828; }
+        .status-badge.paid-badge { background: #e8f5e9; color: #2e7d32; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💳 Nate's Purchases</h1>
+            <p>Purchase Tracker</p>
+            <div class="sync-status" id="syncStatus">● Connecting...</div>
+        </div>
+
+        <div class="balance-section">
+            <div class="balance-label">Current Balance Owed</div>
+            <div class="balance-value" id="balanceValue">$0.00</div>
+            <div class="balance-note">Tracked on dad's card</div>
+        </div>
+
+        <div class="input-section">
+            <button class="btn btn-paid" onclick="markPaidInFull()">✓ PAID IN FULL (via Zelle/Cash App)</button>
+        </div>
+
+        <div class="input-section">
+            <h3>➕ Add New Purchase</h3>
+            <div class="input-group">
+                <label>Amount ($)</label>
+                <input type="number" id="amount" placeholder="0.00" step="0.01">
+            </div>
+            <div class="input-group">
+                <label>Description</label>
+                <input type="text" id="description" placeholder="What did you buy?">
+            </div>
+            <div class="input-group">
+                <label>Notes (optional)</label>
+                <textarea id="notes" placeholder="Any additional details..."></textarea>
+            </div>
+            <button class="btn btn-add" onclick="addPurchase()">+ ADD PURCHASE</button>
+        </div>
+
+        <div class="history-section">
+            <h3>📋 Purchase History</h3>
+            <div id="purchaseList"></div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script>
+        const INITIAL_DATA = {
+            purchases: [
+                {date: '2024-09-01', desc: 'Hulu Stars MGM', amount: 20, notes: '', paid: true},
+                {date: '2024-09-01', desc: 'Crunch roll', amount: 7.99, notes: '', paid: true},
+                {date: '2024-09-01', desc: 'Behind', amount: 158.98, notes: '', paid: true},
+                {date: '2024-10-01', desc: 'Hulu Stars MGM', amount: 20, notes: '', paid: true},
+                {date: '2024-10-01', desc: 'Crunch roll', amount: 7.99, notes: '', paid: true},
+                {date: '2024-10-01', desc: 'Robot movie', amount: 29.99, notes: '', paid: true},
+                {date: '2024-10-01', desc: 'Deadpool', amount: 24.99, notes: '', paid: true},
+                {date: '2024-11-01', desc: 'Hulu Stars MGM', amount: 20, notes: '', paid: true},
+                {date: '2024-11-01', desc: 'Crunch roll', amount: 7.99, notes: '', paid: true},
+                {date: '2024-11-01', desc: 'Oct bill past due', amount: 82.97, notes: '', paid: true},
+                {date: '2024-11-01', desc: 'Golf', amount: 55, notes: '', paid: true},
+                {date: '2024-12-01', desc: 'Crunch roll', amount: 7.99, notes: 'December', paid: false},
+                {date: '2024-12-08', desc: 'Clint Eastwood', amount: 9.99, notes: '', paid: false},
+                {date: '2024-12-24', desc: 'Gladiator 2', amount: 24.99, notes: '', paid: false},
+                {date: '2024-12-31', desc: 'Wicked', amount: 29.99, notes: '', paid: false},
+                {date: '2025-01-01', desc: 'Crunch roll', amount: 7.99, notes: '', paid: false},
+                {date: '2025-01-01', desc: 'Stars split ending', amount: 5.5, notes: '', paid: false},
+                {date: '2025-01-12', desc: 'Lost Boys', amount: 7.99, notes: '', paid: false},
+                {date: '2025-01-25', desc: 'Sonic 3', amount: 24.99, notes: '', paid: false},
+                {date: '2025-02-01', desc: 'Crunch roll', amount: 7.99, notes: '', paid: false},
+                {date: '2025-02-01', desc: 'Stars split ending', amount: 5.5, notes: '', paid: false},
+                {date: '2025-02-07', desc: 'Moana 2', amount: 29.99, notes: '', paid: false},
+            ]
+        };
+
+        const dbRef = database.ref('nate');
+        let state = {...INITIAL_DATA};
+
+        dbRef.once('value').then(snapshot => {
+            if (!snapshot.exists()) {
+                dbRef.set(INITIAL_DATA);
+            }
+        });
+
+        dbRef.on('value', (snapshot) => {
+            if (snapshot.exists()) {
+                state = snapshot.val();
+                updateDisplay();
+                document.getElementById('syncStatus').textContent = '● Synced';
+                document.getElementById('syncStatus').classList.add('connected');
+            }
+        });
+
+        function updateDisplay() {
+            const balance = state.purchases.filter(p => !p.paid).reduce((sum, p) => sum + p.amount, 0);
+            const balanceEl = document.getElementById('balanceValue');
+            balanceEl.textContent = '$' + balance.toFixed(2);
+            balanceEl.className = 'balance-value' + (balance === 0 ? ' paid' : '');
+            renderPurchases();
+        }
+
+        function renderPurchases() {
+            const list = document.getElementById('purchaseList');
+            list.innerHTML = '';
+            const sorted = [...state.purchases].sort((a, b) => new Date(b.date) - new Date(a.date));
+            sorted.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'purchase' + (p.paid ? ' paid' : '');
+                div.innerHTML = `
+                    <div class="purchase-info">
+                        <div class="purchase-date">${p.date}</div>
+                        <div class="purchase-desc">
+                            ${p.desc}
+                            <span class="status-badge ${p.paid ? 'paid-badge' : 'unpaid'}">
+                                ${p.paid ? 'PAID' : 'UNPAID'}
+                            </span>
+                        </div>
+                        ${p.notes ? `<div class="purchase-notes">${p.notes}</div>` : ''}
+                    </div>
+                    <div class="purchase-amount">$${p.amount.toFixed(2)}</div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function showNotification(message, type = 'success') {
+            const notif = document.getElementById('notification');
+            notif.textContent = message;
+            notif.className = 'notification ' + type + ' show';
+            setTimeout(() => { notif.className = 'notification ' + type; }, 3000);
+        }
+
+        function addPurchase() {
+            const amount = parseFloat(document.getElementById('amount').value);
+            const desc = document.getElementById('description').value;
+            const notes = document.getElementById('notes').value;
+            
+            if (!amount || amount <= 0) {
+                showNotification('Please enter a valid amount', 'error');
+                return;
+            }
+            if (!desc) {
+                showNotification('Please enter a description', 'error');
+                return;
+            }
+            
+            state.purchases.push({
+                date: new Date().toISOString().split('T')[0],
+                desc: desc,
+                amount: amount,
+                notes: notes,
+                paid: false
+            });
+            
+            dbRef.set(state);
+            document.getElementById('amount').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('notes').value = '';
+            showNotification('Purchase added: $' + amount.toFixed(2), 'success');
+        }
+
+        function markPaidInFull() {
+            const unpaidCount = state.purchases.filter(p => !p.paid).length;
+            const unpaidTotal = state.purchases.filter(p => !p.paid).reduce((sum, p) => sum + p.amount, 0);
+            
+            if (unpaidCount === 0) {
+                showNotification('No unpaid purchases!', 'error');
+                return;
+            }
+            
+            if (confirm(`Mark all ${unpaidCount} unpaid purchases ($${unpaidTotal.toFixed(2)}) as PAID?`)) {
+                state.purchases = state.purchases.map(p => ({...p, paid: true}));
+                dbRef.set(state);
+                showNotification('All purchases marked as PAID! 🎉', 'success');
+            }
+        }
+    </script>
+</body>
+</html>
