@@ -401,22 +401,26 @@
         const dbRef = database.ref('lilly');
         let state = {...INITIAL_DATA};
 
-        // Initialize database with initial data if empty
+        // Initialize database - ensure complete structure exists
         dbRef.once('value').then(snapshot => {
-            if (!snapshot.exists() || !snapshot.val().checking || !snapshot.val().transactions) {
+            if (!snapshot.exists() || !snapshot.val().transactions) {
                 console.log('Initializing complete data structure');
-                dbRef.set(INITIAL_DATA);
+                return dbRef.set(INITIAL_DATA).then(() => {
+                    state = INITIAL_DATA;
+                    updateDisplay();
+                });
+            } else {
+                state = snapshot.val();
+                updateDisplay();
             }
         });
 
         // Listen for changes
         dbRef.on('value', (snapshot) => {
-            if (snapshot.exists() && snapshot.val().checking !== undefined) {
+            if (snapshot.exists() && snapshot.val().transactions !== undefined) {
                 state = snapshot.val();
-            } else {
-                state = INITIAL_DATA;
+                updateDisplay();
             }
-            updateDisplay();
             document.getElementById('syncStatus').textContent = '● Synced';
             document.getElementById('syncStatus').classList.add('connected');
         });
@@ -437,6 +441,18 @@
 
         function renderTransactions() {
             const list = document.getElementById('transactionList');
+            
+            // Safety check
+            if (!state.transactions || state.transactions.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <p>🎉 Welcome to your new bank account!</p>
+                        <p>Start by adding your first transaction above</p>
+                    </div>
+                `;
+                return;
+            }
+            
             list.innerHTML = '';
             
             const sorted = [...state.transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
