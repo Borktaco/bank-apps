@@ -17,10 +17,6 @@
     "nate": {
       ".read": true,
       ".write": "auth != null && auth.token.email_verified == true && (auth.token.email == 'masterbork@gmail.com' || auth.token.email == 'alecnbourque@gmail.com')"
-    },
-    "renee": {
-      ".read": true,
-      ".write": true
     }
   }
 }
