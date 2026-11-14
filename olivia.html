@@ -374,6 +374,8 @@
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="auth-guard.js"></script>
     <script>
     // Firebase Configuration
     const firebaseConfig = {
@@ -443,7 +445,7 @@
         dbRef.once('value').then(snapshot => {
             if (!snapshot.exists() || !snapshot.val().checking || !snapshot.val().transactions) {
                 console.log('Initializing complete data structure');
-                dbRef.set(INITIAL_DATA);
+                BankAuth.quiet(dbRef.set(INITIAL_DATA));
             }
         });
 
@@ -525,7 +527,7 @@
                 amount: amount
             });
             
-            dbRef.set(state);
+            BankAuth.guard(dbRef.set(state));
             
             document.getElementById('amount').value = '';
             document.getElementById('description').value = '';
@@ -559,7 +561,7 @@
                 amount: -amount
             });
             
-            dbRef.set(state);
+            BankAuth.guard(dbRef.set(state));
             
             document.getElementById('amount').value = '';
             document.getElementById('description').value = '';
@@ -571,7 +573,7 @@
             const newAmount = parseFloat(document.getElementById('btcAmount').value);
             if (!isNaN(newAmount) && newAmount >= 0) {
                 state.btcAmount = newAmount;
-                dbRef.set(state);
+                BankAuth.guard(dbRef.set(state));
                 showNotification('Bitcoin amount updated!', 'success');
             }
         }
@@ -598,7 +600,7 @@
                 document.getElementById('lastUpdate').textContent = 
                     'Updated: ' + now.toLocaleTimeString();
                 
-                dbRef.child('btcPrice').set(price);
+                BankAuth.quiet(dbRef.child('btcPrice').set(price));
                 updateDisplay();
             } catch (error) {
                 console.error('Error fetching BTC price:', error);

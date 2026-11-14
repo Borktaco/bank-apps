@@ -1048,6 +1048,10 @@ color:rgba(255,248,231,0.3);
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js" onerror="window.__errors.push('Firebase database SDK failed to load');showDebug();"></script>
 
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js" onerror="window.__errors.push('Firebase auth SDK failed to load');showDebug();"></script>
+
+  <script src="auth-guard.js"></script>
+
   <script>
     // === FIREBASE CONFIG (shared with kids' bank-apps project) ===
     var db, reneeRef;
@@ -1073,7 +1077,6 @@ color:rgba(255,248,231,0.3);
     }
 
     // === CONFIG ===
-    const ADMIN_PIN = 'xxxx'; // Change by editing file and re-uploading
     const CATEGORIES = [
       {id:'groceries', emoji:'🛒', label:'Groceries'},
       {id:'gas', emoji:'⛽', label:'Gas'},
@@ -1178,7 +1181,7 @@ color:rgba(255,248,231,0.3);
         state.allowance = data.allowance || { enabled:false, amount:0, day:5, lastPaid:null };
       } else {
         // Initialize
-        reneeRef.set({ balance:0, transactions:{}, allowance:state.allowance });
+        BankAuth.quiet(reneeRef.set({ balance:0, transactions:{}, allowance:state.allowance }));
       }
       setSync('synced', 'Synced');
       render();
@@ -1283,10 +1286,10 @@ color:rgba(255,248,231,0.3);
         ts: Date.now()
       };
       const newBal = Math.round((state.balance - txn.amount) * 100) / 100;
-      reneeRef.update({
+      BankAuth.guard(reneeRef.update({
         balance: newBal,
         ['transactions/' + txn.id]: txn
-      }).then(() => {
+      })).then(() => {
         toast('Purchase logged · $' + amt.toFixed(2), '💳');
         closeModal('spendModal');
         if(navigator.vibrate) navigator.vibrate(30);
@@ -1305,10 +1308,10 @@ color:rgba(255,248,231,0.3);
         ts: Date.now()
       };
       const newBal = Math.round((state.balance + txn.amount) * 100) / 100;
-      reneeRef.update({
+      BankAuth.guard(reneeRef.update({
         balance: newBal,
         ['transactions/' + txn.id]: txn
-      }).then(() => {
+      })).then(() => {
         toast('Added $' + amt.toFixed(2), '💰');
         closeModal('addModal');
         if(navigator.vibrate) navigator.vibrate([30,50,30]);
@@ -1317,10 +1320,13 @@ color:rgba(255,248,231,0.3);
 
     // === PIN ===
     function requestPin(purpose='add'){
+      // Adding money and allowance changes now need Dad's Google sign in (auth-guard.js)
       pinPurpose = purpose;
-      pinBuffer = '';
-      updatePinDots();
-      openModal('pinModal');
+      BankAuth.requireOwner().then(ok => {
+        if(!ok) return;
+        if(purpose === 'add') openModal('addModal');
+        else if(purpose === 'allowance') openModal('allowanceModal');
+      });
     }
     function pinType(n){
       if(pinBuffer.length >= 4) return;
@@ -1338,7 +1344,7 @@ color:rgba(255,248,231,0.3);
       });
     }
     function checkPin(){
-      if(pinBuffer === ADMIN_PIN){
+      if(window.BankAuth && BankAuth.isOwner()){
         closeModal('pinModal');
         setTimeout(() => {
           if(pinPurpose === 'add') openModal('addModal');
@@ -1370,7 +1376,7 @@ color:rgba(255,248,231,0.3);
       const day = dayBtn ? parseInt(dayBtn.dataset.day) : 5;
       if(enabled && amount <= 0){ toast('Enter an amount', '⚠️'); return; }
       const newAllowance = { enabled, amount, day, lastPaid: state.allowance.lastPaid || null };
-      reneeRef.child('allowance').set(newAllowance).then(() => {
+      BankAuth.guard(reneeRef.child('allowance').set(newAllowance)).then(() => {
         toast(enabled ? 'Allowance scheduled · $' + amount + '/week' : 'Allowance paused', '👑');
         closeModal('allowanceModal');
       });

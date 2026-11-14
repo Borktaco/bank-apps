@@ -180,6 +180,8 @@
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="auth-guard.js"></script>
     <script>
     // Firebase Configuration
     const firebaseConfig = {
@@ -228,7 +230,7 @@
 
         dbRef.once('value').then(snapshot => {
             if (!snapshot.exists()) {
-                dbRef.set(INITIAL_DATA);
+                BankAuth.quiet(dbRef.set(INITIAL_DATA));
             }
         });
 
@@ -302,7 +304,7 @@
                 paid: false
             });
             
-            dbRef.set(state);
+            BankAuth.guard(dbRef.set(state));
             document.getElementById('amount').value = '';
             document.getElementById('description').value = '';
             document.getElementById('notes').value = '';
@@ -320,7 +322,7 @@
             
             if (confirm(`Mark all ${unpaidCount} unpaid purchases ($${unpaidTotal.toFixed(2)}) as PAID?`)) {
                 state.purchases = state.purchases.map(p => ({...p, paid: true}));
-                dbRef.set(state);
+                BankAuth.guard(dbRef.set(state));
                 showNotification('All purchases marked as PAID! 🎉', 'success');
             }
         }

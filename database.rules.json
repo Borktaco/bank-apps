@@ -1,0 +1,26 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "olivia": {
+      ".read": true,
+      ".write": "auth != null && auth.token.email_verified == true && (auth.token.email == 'masterbork@gmail.com' || auth.token.email == 'alecnbourque@gmail.com')"
+    },
+    "lilly": {
+      ".read": true,
+      ".write": "auth != null && auth.token.email_verified == true && (auth.token.email == 'masterbork@gmail.com' || auth.token.email == 'alecnbourque@gmail.com')"
+    },
+    "amelia": {
+      ".read": true,
+      ".write": "auth != null && auth.token.email_verified == true && (auth.token.email == 'masterbork@gmail.com' || auth.token.email == 'alecnbourque@gmail.com')"
+    },
+    "nate": {
+      ".read": true,
+      ".write": "auth != null && auth.token.email_verified == true && (auth.token.email == 'masterbork@gmail.com' || auth.token.email == 'alecnbourque@gmail.com')"
+    },
+    "renee": {
+      ".read": true,
+      ".write": true
+    }
+  }
+}
